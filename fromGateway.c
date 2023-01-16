@@ -28,7 +28,7 @@ int main() {
     memset(&cliaddr, 0, sizeof(cliaddr));
 
     // Filling server information
-    servaddr.sin_family = AF_INET; // IPv4
+    servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = INADDR_ANY;
     servaddr.sin_port = htons(PORT);
 
@@ -42,7 +42,7 @@ int main() {
 
     int len, n;
 
-    len = sizeof(cliaddr); //len is value/result
+    len = sizeof(cliaddr);
     while (1) {
         n = recvfrom(sockFromGateway, (char *) buffer, MAXLINE,
                      MSG_WAITALL, (struct sockaddr *) &cliaddr,

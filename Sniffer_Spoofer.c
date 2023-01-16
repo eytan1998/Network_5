@@ -110,46 +110,66 @@ void send_raw_ip_packet(struct ipheader *ip) {
 
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
+    char buffer[1500];
+    memset(buffer, 0, 1500);
 
-
-    /*********************************************************
-      Step 1: Fill in the ICMP header.
-    ********************************************************/
+    //spoofed and sniffed icmp
+    struct icmpheader *spoofed_icmp = (struct icmpheader *)
+            (packet + sizeof(struct ipheader)+ SIZE_ETHERNET);
     struct icmpheader *icmp = (struct icmpheader *)
-            (packet  +SIZE_ETHERNET + sizeof(struct ipheader));
-    if(icmp->icmp_type != 8) return;
-    icmp->icmp_type = 0; //ICMP Type: 8 is request, 0 is reply.
-    icmp->icmp_seq = htons(icmp->icmp_seq+1);
+            (buffer + sizeof(struct ipheader));
+
+    if (spoofed_icmp->icmp_type != 8) return; // only the requests
+
+    char *data = buffer + sizeof(struct ipheader) +
+                 sizeof(struct icmpheader);
+    const char *msg = "I am not Pong XD\n";
+    int data_len = strlen(msg);
+    strncpy(data, msg, data_len);
+
+
+    icmp->icmp_type = 0; //set to reply
+    icmp->icmp_seq = spoofed_icmp->icmp_seq;
+    icmp->icmp_id = spoofed_icmp->icmp_id;
     // Calculate the checksum for integrity
     icmp->icmp_chksum = 0;
     icmp->icmp_chksum = in_cksum((unsigned short *) icmp,
                                  sizeof(struct icmpheader));
-
-    /*********************************************************
-       Step 2: Fill in the IP header.
-     ********************************************************/
-
-    struct ipheader *ip = (struct ipheader *) (packet + SIZE_ETHERNET);
-
+    //fill ip header
+    struct ipheader *snoofed_ip = (struct ipheader *) (packet + SIZE_ETHERNET);
+    struct ipheader *ip = (struct ipheader *) buffer;
     ip->iph_ver = 4;
     ip->iph_ihl = 5;
-    ip->iph_ttl = 20;
-    char* addr = inet_ntoa(ip->iph_destip);
-    ip->iph_destip.s_addr = inet_addr(inet_ntoa(ip->iph_sourceip));
-    ip->iph_sourceip.s_addr = inet_addr(addr);
+    ip->iph_ttl = 99;
+    //switch the address
+    ip->iph_sourceip.s_addr = snoofed_ip->iph_destip.s_addr;
+    ip->iph_destip.s_addr = snoofed_ip->iph_sourceip.s_addr;
     ip->iph_protocol = IPPROTO_ICMP;
     ip->iph_len = htons(sizeof(struct ipheader) +
-                        sizeof(struct icmpheader));
-    /*********************************************************
-       Step 3: Finally, send the spoofed packet
-     ********************************************************/
+                        sizeof(struct icmpheader)+ data_len);
+
+
+    //print
+    char source[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &snoofed_ip->iph_sourceip, source, INET_ADDRSTRLEN);
+    char dest[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &snoofed_ip->iph_destip, dest, INET_ADDRSTRLEN);
+    static int x = 1;
+    printf("Got icmp request #%d from %s -> %s\n", x++,source, dest);
+    printf("Sending reply to %s\n",source);
+
+
     send_raw_ip_packet(ip);
 
 }
 
 
-int main() {
-    char *dev = "wlp0s20f3";   /* capture device name */
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("error format ./Sniffer <device>.\n");
+        return -1;
+    }
+    char *dev = argv[1];   /* capture device name */
     char errbuf[PCAP_ERRBUF_SIZE];  /* error buffer */
     pcap_t *handle;    /* packet capture handle */
 
@@ -193,6 +213,7 @@ int main() {
                 filter_exp, pcap_geterr(handle));
         exit(EXIT_FAILURE);
     }
+    printf("[+] start sniffing on %s\n",dev);
 
     /* now we can set our callback function */
     pcap_loop(handle, -1, got_packet, NULL);
