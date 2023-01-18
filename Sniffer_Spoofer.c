@@ -166,7 +166,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        printf("error format ./Sniffer <device>.\n");
+        printf("error format ./Sniffer_Spoofer <device>.\n");
         return -1;
     }
     char *dev = argv[1];   /* capture device name */

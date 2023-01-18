@@ -17,17 +17,6 @@
 //TODO גתיבה על חלק ד
 
 
-// צילמוי מסך חלק א
-// צילמוי מסך חלק ב
-// צילמוי מסך חלק ג
-// צילמוי מסך חלק ד
-
-// צילומי ווירשרק חלק א
-// צילומי ווירשרק חלק ב
-// צילומי ווירשרק חלק ג
-// צילומי ווירשרק חלק ד
-
-//TODO הערות על הקוד
 
 
 int main(int argc, char *argv[]) {
@@ -37,6 +26,8 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     int sockFromGateway;
+    int sockToGateway;
+    struct sockaddr_in fromGatewayaddr, cliaddr;
     char buffer[MAXLINE];
     struct sockaddr_in toGatewayAddr;
 
@@ -46,35 +37,32 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     printf("[+] created socket with host\n");
-    memset(&toGatewayAddr, 0, sizeof(toGatewayAddr));
+    memset(&fromGatewayaddr, 0, sizeof(fromGatewayaddr));
 
-    // Filling toGateway information
-    toGatewayAddr.sin_family = AF_INET;
-    toGatewayAddr.sin_port = htons(PORT + 1);
-    toGatewayAddr.sin_addr.s_addr = inet_addr(argv[1]);
+    // Filling fromGateway information
+    fromGatewayaddr.sin_family = AF_INET;
+    fromGatewayaddr.sin_port = htons(PORT + 1);
+    fromGatewayaddr.sin_addr.s_addr = inet_addr(argv[1]);
 
 
-    int sockToGateway;
-    struct sockaddr_in fromGatewayaddr, cliaddr;
-
-    // Creating socket
+  //creating socket
     if ((sockToGateway = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
     printf("[+] created socket client\n");
 
-    memset(&fromGatewayaddr, 0, sizeof(fromGatewayaddr));
+    memset(&toGatewayAddr, 0, sizeof(toGatewayAddr));
     memset(&cliaddr, 0, sizeof(cliaddr));
 
     // Filling fromGateway information
-    fromGatewayaddr.sin_family = AF_INET; // IPv4
-    fromGatewayaddr.sin_addr.s_addr = INADDR_ANY;
-    fromGatewayaddr.sin_port = htons(PORT);
+    toGatewayAddr.sin_family = AF_INET; // IPv4
+    toGatewayAddr.sin_addr.s_addr = INADDR_ANY;
+    toGatewayAddr.sin_port = htons(PORT);
 
     // Bind the socket with the fromGateway address
-    if (bind(sockToGateway, (const struct sockaddr *) &fromGatewayaddr,
-             sizeof(fromGatewayaddr)) < 0) {
+    if (bind(sockToGateway, (const struct sockaddr *) &toGatewayAddr,
+             sizeof(toGatewayAddr)) < 0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
@@ -100,8 +88,8 @@ int main(int argc, char *argv[]) {
         }
         //pass to "fromGateway"
         sendto(sockFromGateway, (char *) buffer, MAXLINE,
-               MSG_CONFIRM, (const struct sockaddr *) &toGatewayAddr,
-               sizeof(toGatewayAddr));
+               MSG_CONFIRM, (const struct sockaddr *) &fromGatewayaddr,
+               sizeof(fromGatewayaddr));
         printf("[+] Message pass to host.\n");
     }
 

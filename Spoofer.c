@@ -226,8 +226,8 @@ void fillUdpHeader(char buffer[1500]) {
     const char *msg = "I am snooped udp package\n";
     int data_len = strlen(msg);
     strncpy(data, msg, data_len);
-    udp->udp_sport = htons(9999);
-    udp->udp_dport = htons(9998);
+    udp->udp_sport = htons(56789);
+    udp->udp_dport = htons(9876);
     udp->udp_ulen = htons(sizeof(struct udpheader) + data_len);
     udp->udp_sum = 0;
 
@@ -241,6 +241,7 @@ void fillUdpHeader(char buffer[1500]) {
     ip->iph_protocol = IPPROTO_UDP;
     ip->iph_len = htons(sizeof(struct ipheader) +
                         sizeof(struct udpheader) + data_len);
+
 
 }
 /*************************************************************
@@ -262,8 +263,8 @@ void fillIcmpHeader(char buffer[1500]) {
     ip->iph_ver = 4;
     ip->iph_ihl = 5;
     ip->iph_ttl = 20;
-    ip->iph_sourceip.s_addr = inet_addr("10.0.0.8");
-    ip->iph_destip.s_addr = inet_addr("10.0.0.12");
+    ip->iph_sourceip.s_addr = inet_addr("10.0.0.12");
+    ip->iph_destip.s_addr = inet_addr("10.0.0.8");
     ip->iph_protocol = IPPROTO_ICMP;
     ip->iph_len = htons(sizeof(struct ipheader) +
                         sizeof(struct icmpheader));

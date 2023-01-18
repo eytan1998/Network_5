@@ -75,7 +75,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     size_t len = header->len - (SIZE_ETHERNET + size_ip + size_tcp);
 
     //print sniffed packet
-    FILE *fps = fopen("snifferOutput.txt", "a");
+    FILE *fps = fopen("209216381_206563215.txt", "a");
     static int x = 1;
     printf("Got packet #%d\n", x);
     fprintf(fps, "############################-%d-#################################\n", x++);
@@ -85,43 +85,44 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     fprintf(fps, "[#] dest_ip: %s.\n", inet_ntoa(ip->ip_dst));
     fprintf(fps, "[#] source_port: %d.\n", ntohs(tcp->th_sport));
     fprintf(fps, "[#] dest_port: %d.\n", ntohs(tcp->th_dport));
-    fprintf(fps, "[#] timestamp: %u.\n", ntohl(payload->unixtime));
-    fprintf(fps, "[#] total_length: %hu.\n", ntohs(payload->length));
-    fprintf(fps, "[#] cache_flag: %d.\n", (ntohs(payload->flags) & CACHE) >> 12); //bitwize operations
-    fprintf(fps, "[#] steps_flag: %d.\n", (ntohs(payload->flags) & STEPS) >> 11);
-    fprintf(fps, "[#] type_flag: %d.\n", (ntohs(payload->flags) & TYPE) >> 10);
-    fprintf(fps, "[#] status_code: %d.\n", (ntohs(payload->flags) & STATUS));
-    fprintf(fps, "[#] cache_control: %hu.\n", ntohs(payload->cache));
+    if(header->len >  SIZE_ETHERNET + size_ip + size_tcp) { // more info after tcp header
+        fprintf(fps, "[#] timestamp: %u.\n", ntohl(payload->unixtime));
+        fprintf(fps, "[#] total_length: %hu.\n", ntohs(payload->length));
+        fprintf(fps, "[#] cache_flag: %d.\n", (ntohs(payload->flags) & CACHE) >> 12); //bitwize operations
+        fprintf(fps, "[#] steps_flag: %d.\n", (ntohs(payload->flags) & STEPS) >> 11);
+        fprintf(fps, "[#] type_flag: %d.\n", (ntohs(payload->flags) & TYPE) >> 10);
+        fprintf(fps, "[#] status_code: %d.\n", (ntohs(payload->flags) & STATUS));
+        fprintf(fps, "[#] cache_control: %hu.\n", ntohs(payload->cache));
 
-    //only print if there is data
-    if (len > 0) {
-        fprintf(fps, "\n################################################################\n");
-        fprintf(fps, "#######################=---DATA----=#########################\n");
-        fprintf(fps, "################################################################\n ");
-        int i;
-        //-12 account for payload header
-        //+1 for devide by 16 not on first time
-        for (i = 1; i < len + 1 - 12; i++) {
-            fprintf(fps, "%02X ", *data);
+        //only print if there is data
+        if (len > 0) {
+            fprintf(fps, "\n################################################################\n");
+            fprintf(fps, "#######################=---DATA----=#########################\n");
+            fprintf(fps, "################################################################\n ");
+            int i;
+            //-12 account for payload header
+            //+1 for devide by 16 not on first time
+            for (i = 1; i < len + 1 - 12; i++) {
+                fprintf(fps, "%02X ", *data);
 
-            data++;
-            if (i % 16 == 0) {
-                fprintf(fps, "\t");
-                data -= 16;
-                for (int j = 0; j < 16; ++j) {
-                    if (isprint(*data))
-                        fprintf(fps, "%c", *data);
-                    else
-                        fprintf(fps, ".");
-                    data++;
+                data++;
+                if (i % 16 == 0) {
+                    fprintf(fps, "\t");
+                    data -= 16;
+                    for (int j = 0; j < 16; ++j) {
+                        if (isprint(*data))
+                            fprintf(fps, "%c", *data);
+                        else
+                            fprintf(fps, ".");
+                        data++;
+                    }
+                    fprintf(fps, "\n");
                 }
-                fprintf(fps, "\n");
+                fprintf(fps, " ");
             }
-            fprintf(fps, " ");
+
         }
-
     }
-
 
     fprintf(fps, "\n");
 

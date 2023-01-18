@@ -2,10 +2,10 @@
 
 all: Sniffer Spoofer Sniffer_Spoofer Gateway toGateway fromGateway
 
-fromGateway:
+fromGateway: fromGateway.c
 	gcc fromGateway.c -o $@
 
-toGateway:
+toGateway: toGateway.c
 	gcc toGateway.c -o $@
 
 Gateway: Gateway.c
